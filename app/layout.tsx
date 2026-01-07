@@ -10,8 +10,8 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
+  title: "SAS Builders", // Updated title to SAS Builders
+  description: "Business management tools for SAS Builders", // Updated description
   generator: "v0.app",
   icons: {
     icon: [

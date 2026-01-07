@@ -32,11 +32,20 @@ export function Navbar() {
     { href: "/calculator", label: "Calculator" },
     { href: "/expenses", label: "Expenses" },
     { href: "/oil-change", label: "Oil Change" },
+    { href: "/vehicles", label: "Vehicles" },
+    { href: "/drivers", label: "Drivers" },
   ]
 
   return (
     <nav className="border-b bg-background">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+            <span className="text-lg font-bold text-primary-foreground">S</span>
+          </div>
+          <span className="text-lg font-semibold">SAS Builders</span>
+        </Link>
+
         <div className="flex gap-6">
           {links.map((link) => (
             <Link
