@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Navbar } from "@/components/navbar"
 import { ReduxProvider } from "@/components/providers/redux-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -43,6 +44,7 @@ export default function RootLayout({
         <ReduxProvider>
           <Navbar />
           {children}
+          <Toaster />
         </ReduxProvider>
         <Analytics />
       </body>

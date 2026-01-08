@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,41 +18,20 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Pencil, Trash2, Plus } from "lucide-react"
-
-interface Vehicle {
-  id: string
-  number: string
-  name: string
-  category: string
-  oil_change_interval_hours: number
-  description: string
-}
+import { Pencil, Trash2, Plus, Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { getAllVehicles, createVehicle, updateVehicle, deleteVehicle } from "@/lib/api"
+import type { Vehicle } from "@/lib/api"
 
 const categories = ["Excavator", "Bulldozer", "Loader", "Dump Truck", "Grader", "Roller", "Crane", "Forklift", "Other"]
 
 export default function VehiclesPage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    {
-      id: "1",
-      number: "V001",
-      name: "CAT 320 Excavator",
-      category: "Excavator",
-      oil_change_interval_hours: 250,
-      description: "Primary excavator for site work",
-    },
-    {
-      id: "2",
-      number: "V002",
-      name: "Komatsu D65 Dozer",
-      category: "Bulldozer",
-      oil_change_interval_hours: 500,
-      description: "Heavy duty bulldozer",
-    },
-  ])
-
+  const { toast } = useToast()
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     number: "",
     name: "",
@@ -60,6 +39,27 @@ export default function VehiclesPage() {
     oil_change_interval_hours: "",
     description: "",
   })
+
+  useEffect(() => {
+    fetchVehicles()
+  }, [])
+
+  const fetchVehicles = async () => {
+    try {
+      setLoading(true)
+      const data = await getAllVehicles()
+      setVehicles(data)
+    } catch (error) {
+      console.error("[v0] Failed to fetch vehicles:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load vehicles. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleOpenDialog = (vehicle?: Vehicle) => {
     if (vehicle) {
@@ -96,44 +96,68 @@ export default function VehiclesPage() {
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSubmitting(true)
 
-    if (editingVehicle) {
-      // Update existing vehicle
-      setVehicles(
-        vehicles.map((v) =>
-          v.id === editingVehicle.id
-            ? {
-                ...v,
-                number: formData.number,
-                name: formData.name,
-                category: formData.category,
-                oil_change_interval_hours: Number(formData.oil_change_interval_hours),
-                description: formData.description,
-              }
-            : v,
-        ),
-      )
-    } else {
-      // Add new vehicle
-      const newVehicle: Vehicle = {
-        id: Date.now().toString(),
+    try {
+      const vehicleData = {
         number: formData.number,
         name: formData.name,
         category: formData.category,
         oil_change_interval_hours: Number(formData.oil_change_interval_hours),
         description: formData.description,
       }
-      setVehicles([...vehicles, newVehicle])
-    }
 
-    handleCloseDialog()
+      if (editingVehicle) {
+        // Update existing vehicle
+        await updateVehicle(editingVehicle.id, vehicleData)
+        toast({
+          title: "Success",
+          description: "Vehicle updated successfully.",
+        })
+      } else {
+        // Add new vehicle
+        await createVehicle(vehicleData)
+        toast({
+          title: "Success",
+          description: "Vehicle created successfully.",
+        })
+      }
+
+      await fetchVehicles()
+      handleCloseDialog()
+    } catch (error) {
+      console.error("[v0] Failed to save vehicle:", error)
+      toast({
+        title: "Error",
+        description: `Failed to ${editingVehicle ? "update" : "create"} vehicle. Please try again.`,
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this vehicle?")) {
-      setVehicles(vehicles.filter((v) => v.id !== id))
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this vehicle?")) {
+      return
+    }
+
+    try {
+      await deleteVehicle(id)
+      toast({
+        title: "Success",
+        description: "Vehicle deleted successfully.",
+      })
+      await fetchVehicles()
+    } catch (error) {
+      console.error("[v0] Failed to delete vehicle:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete vehicle. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -153,49 +177,55 @@ export default function VehiclesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Oil Change Interval (hrs)</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {vehicles.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                      No vehicles found. Add your first vehicle to get started.
-                    </TableCell>
+                    <TableHead>Number</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Oil Change Interval (hrs)</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : (
-                  vehicles.map((vehicle) => (
-                    <TableRow key={vehicle.id}>
-                      <TableCell className="font-medium">{vehicle.number}</TableCell>
-                      <TableCell>{vehicle.name}</TableCell>
-                      <TableCell>{vehicle.category}</TableCell>
-                      <TableCell>{vehicle.oil_change_interval_hours}</TableCell>
-                      <TableCell className="max-w-xs truncate">{vehicle.description}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(vehicle)}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(vehicle.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {vehicles.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No vehicles found. Add your first vehicle to get started.
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  ) : (
+                    vehicles.map((vehicle) => (
+                      <TableRow key={vehicle.id}>
+                        <TableCell className="font-medium">{vehicle.number}</TableCell>
+                        <TableCell>{vehicle.name}</TableCell>
+                        <TableCell>{vehicle.category}</TableCell>
+                        <TableCell>{vehicle.oil_change_interval_hours}</TableCell>
+                        <TableCell className="max-w-xs truncate">{vehicle.description}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(vehicle)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(vehicle.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -276,10 +306,13 @@ export default function VehiclesPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseDialog}>
+              <Button type="button" variant="outline" onClick={handleCloseDialog} disabled={submitting}>
                 Cancel
               </Button>
-              <Button type="submit">{editingVehicle ? "Update Vehicle" : "Add Vehicle"}</Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingVehicle ? "Update Vehicle" : "Add Vehicle"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
