@@ -1,0 +1,150 @@
+Drivers
+
+
+POST
+/api/v1/drivers
+Create a new driver
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "name": "John Doe",
+  "phoneNumber": "+1234567890"
+}
+Responses
+Code  Description Links
+201 
+The driver has been successfully created.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 1,
+  "name": "John Doe",
+  "phoneNumber": "+1234567890",
+  "createdAt": "2023-10-01T10:00:00Z",
+  "updatedAt": "2023-10-01T10:00:00Z"
+}
+No links
+400 
+Bad Request.
+
+No links
+
+GET
+/api/v1/drivers
+Get all drivers
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code  Description Links
+200 
+Return all drivers.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "phoneNumber": "+1234567890",
+    "createdAt": "2023-10-01T10:00:00Z",
+    "updatedAt": "2023-10-01T10:00:00Z"
+  }
+]
+No links
+
+GET
+/api/v1/drivers/{id}
+Get a driver by id
+
+Parameters
+Try it out
+Name  Description
+id *
+string
+(path)
+id
+Responses
+Code  Description Links
+200 
+Return the driver.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 1,
+  "name": "John Doe",
+  "phoneNumber": "+1234567890",
+  "createdAt": "2023-10-01T10:00:00Z",
+  "updatedAt": "2023-10-01T10:00:00Z"
+}
+No links
+404 
+Driver not found.
+
+No links
+
+PATCH
+/api/v1/drivers/{id}
+Update a driver
+
+Parameters
+Try it out
+Name  Description
+id *
+string
+(path)
+id
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "name": "John Doe",
+  "phoneNumber": "+1234567890"
+}
+Responses
+Code  Description Links
+200 
+The driver has been successfully updated.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 1,
+  "name": "John Doe",
+  "phoneNumber": "+1234567890",
+  "createdAt": "2023-10-01T10:00:00Z",
+  "updatedAt": "2023-10-01T10:00:00Z"
+}
+No links
+404 
+Driver not found.
