@@ -1,0 +1,198 @@
+Expenses
+
+
+POST
+/api/v1/expenses
+Create a new expense
+
+Parameters
+Try it out
+No parameters
+
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "userId": 1,
+  "vehicleId": 1,
+  "category": 1,
+  "amount": 150.5,
+  "description": "Fuel refill",
+  "expenseTime": "2023-10-01T10:00:00Z"
+}
+Responses
+Code	Description	Links
+201	
+The expense has been successfully created.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 1,
+  "userId": 1,
+  "vehicleId": 1,
+  "category": 1,
+  "amount": 150.5,
+  "description": "Fuel refill",
+  "expenseTime": "2023-10-01T10:00:00Z",
+  "createdAt": "2023-10-01T10:00:00Z"
+}
+No links
+
+GET
+/api/v1/expenses
+Get all expenses
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+Return all expenses.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "id": 1,
+    "userId": 1,
+    "vehicleId": 1,
+    "category": 1,
+    "amount": 150.5,
+    "description": "Fuel refill",
+    "expenseTime": "2023-10-01T10:00:00Z",
+    "createdAt": "2023-10-01T10:00:00Z"
+  }
+]
+No links
+
+GET
+/api/v1/expenses/{id}
+Get an expense by ID
+
+Parameters
+Try it out
+Name	Description
+id *
+number
+(path)
+id
+Responses
+Code	Description	Links
+200	
+Return the expense.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 1,
+  "userId": 1,
+  "vehicleId": 1,
+  "category": 1,
+  "amount": 150.5,
+  "description": "Fuel refill",
+  "expenseTime": "2023-10-01T10:00:00Z",
+  "createdAt": "2023-10-01T10:00:00Z"
+}
+No links
+404	
+Expense not found.
+
+No links
+
+PATCH
+/api/v1/expenses/{id}
+Update an expense
+
+Parameters
+Try it out
+Name	Description
+id *
+number
+(path)
+id
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "userId": 1,
+  "vehicleId": 1,
+  "category": 1,
+  "amount": 150.5,
+  "description": "Fuel refill",
+  "expenseTime": "2023-10-01T10:00:00Z"
+}
+Responses
+Code	Description	Links
+200	
+The expense has been successfully updated.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 1,
+  "userId": 1,
+  "vehicleId": 1,
+  "category": 1,
+  "amount": 150.5,
+  "description": "Fuel refill",
+  "expenseTime": "2023-10-01T10:00:00Z",
+  "createdAt": "2023-10-01T10:00:00Z"
+}
+No links
+
+DELETE
+/api/v1/expenses/{id}
+Delete an expense
+
+Parameters
+Try it out
+Name	Description
+id *
+number
+(path)
+id
+Responses
+Code	Description	Links
+200	
+The expense has been successfully deleted.
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+{
+  "id": 1,
+  "userId": 1,
+  "vehicleId": 1,
+  "category": 1,
+  "amount": 150.5,
+  "description": "Fuel refill",
+  "expenseTime": "2023-10-01T10:00:00Z",
+  "createdAt": "2023-10-01T10:00:00Z"
+}
+No links

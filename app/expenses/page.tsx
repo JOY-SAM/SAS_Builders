@@ -10,17 +10,73 @@ import { Field, FieldLabel } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "@/lib/store/hooks"
-import { setFilter, clearFilters } from "@/lib/store/slices/expenseSlice"
+import { setFilter, clearFilters, setExpenses } from "@/lib/store/slices/expenseSlice"
 import { ExpenseForm } from "@/components/expense-form"
+import axios from "@/lib/axios"
+import { useEffect, useState } from "react"
+
+interface Vehicle {
+  id: number
+  number: string
+  name: string
+  category: string
+  // Add other properties if needed for ExpensesPage, otherwise minimal valid subset is fine
+}
+
+interface Driver {
+  id: number
+  name: string
+  phoneNumber: string
+}
 
 export default function ExpensesPage() {
   const dispatch = useAppDispatch()
   const expenses = useAppSelector((state) => state.expenses.expenses)
   const filters = useAppSelector((state) => state.expenses.filters)
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [drivers, setDrivers] = useState<Driver[]>([])
+
+  const fetchDisplayData = async () => {
+    try {
+      const [expensesRes, vehiclesRes, driversRes] = await Promise.all([
+        axios.get("/api/v1/expenses"),
+        axios.get("/api/v1/vehicles"),
+        axios.get("/api/v1/drivers"),
+      ])
+
+      const vehiclesData = vehiclesRes.data
+      const driversData = driversRes.data
+      setVehicles(vehiclesData)
+      setDrivers(driversData)
+
+      const vehicleMap = new Map<number, string>(vehiclesData.map((v: Vehicle) => [v.id, v.number]))
+      const driverMap = new Map<number, Driver>(driversData.map((d: Driver) => [d.id, d]))
+
+      const mappedExpenses = expensesRes.data.map((expense: any) => ({
+        id: expense.id.toString(),
+        vehicleNo: vehicleMap.get(expense.vehicleId) || "Unknown Vehicle",
+        driver: driverMap.get(expense.userId)?.name || "Unknown Driver",
+        driverPhone: driverMap.get(expense.userId)?.phoneNumber || "",
+        date: expense.expenseTime ? expense.expenseTime.split("T")[0] : "",
+        time: expense.expenseTime ? new Date(expense.expenseTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
+        description: expense.description || "",
+        category: expense.category,
+        amount: Number(expense.amount),
+      }))
+
+      dispatch(setExpenses(mappedExpenses))
+    } catch (error) {
+      console.error("Failed to fetch data:", error)
+    }
+  }
+
+  useEffect(() => {
+    fetchDisplayData()
+  }, [dispatch])
 
   const uniqueVehicles = useMemo(() => Array.from(new Set(expenses.map((e) => e.vehicleNo))), [expenses])
   const uniqueDrivers = useMemo(() => Array.from(new Set(expenses.map((e) => e.driver))), [expenses])
-  const uniqueCategories = useMemo(() => Array.from(new Set(expenses.map((e) => e.category))), [expenses])
+  const uniqueCategories = ["Fuel", "Toll", "Parking","Tyre", "Insurance", "Maintenance","Oil Change", "Other"]
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) => {
@@ -50,7 +106,7 @@ export default function ExpensesPage() {
   }, [expenses, filters])
 
   const totalAmount = useMemo(() => {
-    return filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    return filteredExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0)
   }, [filteredExpenses])
 
   const hasActiveFilters =
@@ -71,7 +127,7 @@ export default function ExpensesPage() {
               <CardTitle className="text-2xl">Vehicle Expense Dashboard</CardTitle>
               <CardDescription>Track and manage expenses across all vehicles and drivers</CardDescription>
             </div>
-            <ExpenseForm />
+            <ExpenseForm vehicles={vehicles} drivers={drivers} onSuccess={fetchDisplayData} />
           </div>
         </CardHeader>
         <CardContent>

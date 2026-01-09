@@ -23,14 +23,29 @@ import { useAppDispatch, useAppSelector } from "@/lib/store/hooks"
 import { addExpense } from "@/lib/store/slices/expenseSlice"
 import { cn } from "@/lib/utils"
 
-interface ExpenseFormProps {
-  trigger?: React.ReactNode
+import axios from "@/lib/axios"
+
+interface Vehicle {
+  id: number
+  number: string
 }
 
-export function ExpenseForm({ trigger }: ExpenseFormProps) {
-  const dispatch = useAppDispatch()
-  const expenses = useAppSelector((state) => state.expenses.expenses)
+interface Driver {
+  id: number
+  name: string
+  phoneNumber: string
+}
 
+interface ExpenseFormProps {
+  trigger?: React.ReactNode
+  vehicles: Vehicle[]
+  drivers: Driver[]
+  onSuccess?: () => void
+}
+
+export function ExpenseForm({ trigger, vehicles = [], drivers = [], onSuccess }: ExpenseFormProps) {
+  const dispatch = useAppDispatch()
+  
   const [open, setOpen] = useState(false)
   const [vehicleOpen, setVehicleOpen] = useState(false)
   const [driverOpen, setDriverOpen] = useState(false)
@@ -51,65 +66,91 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
     amount: "",
   })
 
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // No longer inferring from expenses, using props instead
   const vehicleOptions = useMemo(() => {
-    return Array.from(new Set(expenses.map((e) => e.vehicleNo)))
-  }, [expenses])
+    return vehicles.map(v => v.number)
+  }, [vehicles])
 
   const driverOptions = useMemo(() => {
-    const driversMap = new Map<string, string>()
-    expenses.forEach((e) => {
-      if (!driversMap.has(e.driver)) {
-        driversMap.set(e.driver, e.driverPhone)
-      }
-    })
-    return Array.from(driversMap.entries())
-  }, [expenses])
+    return drivers.map(d => [d.name, d.phoneNumber] as [string, string])
+  }, [drivers])
 
   const categories = ["Fuel", "Maintenance", "Toll", "Parking", "Oil Change", "Repairs", "Other"]
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validate = () => {
+    const newErrors: Record<string, string> = {}
+    
+    if (!formData.vehicleNo) newErrors.vehicleNo = "Vehicle is required"
+    if (!formData.driver) newErrors.driver = "Driver is required"
+    if (!formData.date) newErrors.date = "Date is required"
+    if (!formData.time) newErrors.time = "Time is required"
+    if (!formData.category) newErrors.category = "Category is required"
+    if (!formData.amount) newErrors.amount = "Amount is required"
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Find driver phone if driver is selected from dropdown
-    let driverPhone = formData.driverPhone
-    if (!driverPhone && formData.driver) {
-      const existingDriver = expenses.find((exp) => exp.driver === formData.driver)
-      driverPhone = existingDriver?.driverPhone || ""
+    if (!validate()) {
+      return
     }
 
-    const newExpense = {
-      id: Date.now().toString(),
-      vehicleNo: formData.vehicleNo,
-      driver: formData.driver,
-      driverPhone: driverPhone,
-      date: formData.date,
-      time: formData.time,
-      description: formData.description,
-      category: formData.category,
-      amount: Number.parseFloat(formData.amount),
+    try {
+      const selectedVehicle = vehicles.find(v => v.number === formData.vehicleNo)
+      const selectedDriver = drivers.find(d => d.name === formData.driver)
+
+      if (!selectedVehicle || !selectedDriver) {
+         console.error("Vehicle or Driver not found")
+         return
+      }
+
+      // Combine date and time
+      const expenseTime = new Date(`${formData.date}T${formData.time}:00`).toISOString()
+
+      const payload = {
+        userId: selectedDriver.id,
+        vehicleId: selectedVehicle.id,
+        category: formData.category,
+        amount: Number.parseFloat(formData.amount),
+        description: formData.description || formData.category, // Use category as description fallback
+        expenseTime: expenseTime
+      }
+
+      await axios.post("/api/v1/expenses", payload)
+
+      if (onSuccess) {
+        onSuccess()
+      }
+
+      // Reset form
+      setFormData({
+        vehicleNo: "",
+        driver: "",
+        driverPhone: "",
+        date: currentDate,
+        time: currentTime,
+        description: "",
+        category: "",
+        amount: "",
+      })
+      setErrors({})
+      setOpen(false)
+
+    } catch (error) {
+      console.error("Failed to create expense:", error)
     }
-
-    dispatch(addExpense(newExpense))
-
-    // Reset form
-    setFormData({
-      vehicleNo: "",
-      driver: "",
-      driverPhone: "",
-      date: currentDate,
-      time: currentTime,
-      description: "",
-      category: "",
-      amount: "",
-    })
-    setOpen(false)
   }
 
   const handleDriverSelect = (driverName: string) => {
     setFormData((prev) => ({ ...prev, driver: driverName }))
-    const driver = driverOptions.find(([name]) => name === driverName)
+    const driver = drivers.find((d) => d.name === driverName)
     if (driver) {
-      setFormData((prev) => ({ ...prev, driverPhone: driver[1] }))
+      setFormData((prev) => ({ ...prev, driverPhone: driver.phoneNumber }))
     }
     setDriverOpen(false)
   }
@@ -143,7 +184,10 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                       variant="outline"
                       role="combobox"
                       aria-expanded={vehicleOpen}
-                      className="w-full justify-between bg-transparent"
+                      className={cn(
+                        "w-full justify-between bg-transparent",
+                        errors.vehicleNo && "border-destructive ring-destructive"
+                      )}
                     >
                       {formData.vehicleNo || "Search and select vehicle..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -161,6 +205,9 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                               value={vehicle}
                               onSelect={(value) => {
                                 setFormData((prev) => ({ ...prev, vehicleNo: value }))
+                                if (errors.vehicleNo) {
+                                  setErrors(prev => ({ ...prev, vehicleNo: "" }))
+                                }
                                 setVehicleOpen(false)
                               }}
                             >
@@ -178,6 +225,7 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {errors.vehicleNo && <p className="text-xs text-destructive mt-1">{errors.vehicleNo}</p>}
               </Field>
 
               <Field>
@@ -190,7 +238,10 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                       variant="outline"
                       role="combobox"
                       aria-expanded={driverOpen}
-                      className="w-full justify-between bg-transparent"
+                      className={cn(
+                        "w-full justify-between bg-transparent",
+                        errors.driver && "border-destructive ring-destructive"
+                      )}
                     >
                       {formData.driver || "Search and select driver..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -203,7 +254,12 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                         <CommandEmpty>No driver found.</CommandEmpty>
                         <CommandGroup>
                           {driverOptions.map(([name, phone]) => (
-                            <CommandItem key={name} value={name} onSelect={() => handleDriverSelect(name)}>
+                            <CommandItem key={name} value={name} onSelect={() => {
+                              handleDriverSelect(name)
+                              if (errors.driver) {
+                                setErrors(prev => ({ ...prev, driver: "" }))
+                              }
+                            }}>
                               <Check
                                 className={cn("mr-2 h-4 w-4", formData.driver === name ? "opacity-100" : "opacity-0")}
                               />
@@ -218,6 +274,7 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {errors.driver && <p className="text-xs text-destructive mt-1">{errors.driver}</p>}
               </Field>
             </div>
 
@@ -231,7 +288,9 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                   value={formData.date}
                   onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
                   required
+                  className={cn(errors.date && "border-destructive")}
                 />
+                {errors.date && <p className="text-xs text-destructive mt-1">{errors.date}</p>}
               </Field>
 
               <Field>
@@ -243,7 +302,9 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                   value={formData.time}
                   onChange={(e) => setFormData((prev) => ({ ...prev, time: e.target.value }))}
                   required
+                  className={cn(errors.time && "border-destructive")}
                 />
+                {errors.time && <p className="text-xs text-destructive mt-1">{errors.time}</p>}
               </Field>
             </div>
 
@@ -253,10 +314,15 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
               </FieldLabel>
               <Select
                 value={formData.category}
-                onValueChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
+                onValueChange={(value) => {
+                  setFormData((prev) => ({ ...prev, category: value }))
+                  if (errors.category) {
+                    setErrors(prev => ({ ...prev, category: "" }))
+                  }
+                }}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn(errors.category && "border-destructive ring-destructive")}>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -267,6 +333,7 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+              {errors.category && <p className="text-xs text-destructive mt-1">{errors.category}</p>}
             </Field>
 
             <Field>
@@ -291,7 +358,9 @@ export function ExpenseForm({ trigger }: ExpenseFormProps) {
                 onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
                 placeholder="0.00"
                 required
+                className={cn(errors.amount && "border-destructive")}
               />
+               {errors.amount && <p className="text-xs text-destructive mt-1">{errors.amount}</p>}
             </Field>
           </div>
 
