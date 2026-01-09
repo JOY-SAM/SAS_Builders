@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -19,37 +19,25 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Pencil, Trash2, Plus } from "lucide-react"
+import api from "@/lib/axios"
 
 interface Vehicle {
-  id: string
+  id: number
   number: string
   name: string
   category: string
-  oil_change_interval_hours: number
+  oilChangeIntervalHours: number
   description: string
+  oilLastChanged?: string
+  totalHoursRan?: number
+  createdAt?: string
 }
 
 const categories = ["Excavator", "Bulldozer", "Loader", "Dump Truck", "Grader", "Roller", "Crane", "Forklift", "Other"]
 
 export default function VehiclesPage() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    {
-      id: "1",
-      number: "V001",
-      name: "CAT 320 Excavator",
-      category: "Excavator",
-      oil_change_interval_hours: 250,
-      description: "Primary excavator for site work",
-    },
-    {
-      id: "2",
-      number: "V002",
-      name: "Komatsu D65 Dozer",
-      category: "Bulldozer",
-      oil_change_interval_hours: 500,
-      description: "Heavy duty bulldozer",
-    },
-  ])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
@@ -57,9 +45,25 @@ export default function VehiclesPage() {
     number: "",
     name: "",
     category: "",
-    oil_change_interval_hours: "",
+    oilChangeIntervalHours: "",
     description: "",
   })
+
+  const fetchVehicles = async () => {
+    try {
+      setIsLoading(true)
+      const response = await api.get("/api/v1/vehicles")
+      setVehicles(response.data)
+    } catch (error) {
+      console.error("Failed to fetch vehicles:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchVehicles()
+  }, [])
 
   const handleOpenDialog = (vehicle?: Vehicle) => {
     if (vehicle) {
@@ -68,7 +72,7 @@ export default function VehiclesPage() {
         number: vehicle.number,
         name: vehicle.name,
         category: vehicle.category,
-        oil_change_interval_hours: vehicle.oil_change_interval_hours.toString(),
+        oilChangeIntervalHours: vehicle.oilChangeIntervalHours.toString(),
         description: vehicle.description,
       })
     } else {
@@ -77,7 +81,7 @@ export default function VehiclesPage() {
         number: "",
         name: "",
         category: "",
-        oil_change_interval_hours: "",
+        oilChangeIntervalHours: "",
         description: "",
       })
     }
@@ -91,51 +95,48 @@ export default function VehiclesPage() {
       number: "",
       name: "",
       category: "",
-      oil_change_interval_hours: "",
+      oilChangeIntervalHours: "",
       description: "",
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (editingVehicle) {
-      // Update existing vehicle
-      setVehicles(
-        vehicles.map((v) =>
-          v.id === editingVehicle.id
-            ? {
-                ...v,
-                number: formData.number,
-                name: formData.name,
-                category: formData.category,
-                oil_change_interval_hours: Number(formData.oil_change_interval_hours),
-                description: formData.description,
-              }
-            : v,
-        ),
-      )
-    } else {
-      // Add new vehicle
-      const newVehicle: Vehicle = {
-        id: Date.now().toString(),
+    try {
+      const payload = {
         number: formData.number,
         name: formData.name,
         category: formData.category,
-        oil_change_interval_hours: Number(formData.oil_change_interval_hours),
+        oilChangeIntervalHours: Number(formData.oilChangeIntervalHours),
         description: formData.description,
+        // Default values for required fields not in form yet
+        oilLastChanged: new Date().toISOString(), 
+        totalHoursRan: 0,
       }
-      setVehicles([...vehicles, newVehicle])
-    }
 
-    handleCloseDialog()
+      if (editingVehicle) {
+        // Update existing vehicle
+        await api.patch(`/api/v1/vehicles/${editingVehicle.id}`, payload)
+      } else {
+        // Add new vehicle
+        await api.post("/api/v1/vehicles", payload)
+      }
+      
+      fetchVehicles()
+      handleCloseDialog()
+    } catch (error) {
+      console.error("Failed to save vehicle:", error)
+      alert("Failed to save vehicle. Please try again.")
+    }
   }
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this vehicle?")) {
-      setVehicles(vehicles.filter((v) => v.id !== id))
-    }
-  }
+  // const handleDelete = (id: number) => {
+  //   if (confirm("Are you sure you want to delete this vehicle?")) {
+  //     // setVehicles(vehicles.filter((v) => v.id !== id))
+  //     // API endpoint pending
+  //   }
+  // }
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -166,7 +167,13 @@ export default function VehiclesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {vehicles.length === 0 ? (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      Loading vehicles...
+                    </TableCell>
+                  </TableRow>
+                ) : vehicles.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No vehicles found. Add your first vehicle to get started.
@@ -178,16 +185,16 @@ export default function VehiclesPage() {
                       <TableCell className="font-medium">{vehicle.number}</TableCell>
                       <TableCell>{vehicle.name}</TableCell>
                       <TableCell>{vehicle.category}</TableCell>
-                      <TableCell>{vehicle.oil_change_interval_hours}</TableCell>
+                      <TableCell>{vehicle.oilChangeIntervalHours}</TableCell>
                       <TableCell className="max-w-xs truncate">{vehicle.description}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(vehicle)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(vehicle.id)}>
+                          {/* <Button variant="ghost" size="icon" onClick={() => handleDelete(vehicle.id)}>
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </Button> */}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -259,8 +266,8 @@ export default function VehiclesPage() {
                   type="number"
                   placeholder="250"
                   min="1"
-                  value={formData.oil_change_interval_hours}
-                  onChange={(e) => setFormData({ ...formData, oil_change_interval_hours: e.target.value })}
+                  value={formData.oilChangeIntervalHours}
+                  onChange={(e) => setFormData({ ...formData, oilChangeIntervalHours: e.target.value })}
                   required
                 />
               </div>

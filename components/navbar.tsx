@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useAppSelector } from "@/lib/store/hooks"
@@ -40,9 +41,7 @@ export function Navbar() {
     <nav className="border-b bg-background">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-            <span className="text-lg font-bold text-primary-foreground">S</span>
-          </div>
+      <Image src="/SAS_icon.jpg" alt="SAS Builders Logo" width={32} height={32} className="rounded-md" />
           <span className="text-lg font-semibold">SAS Builders</span>
         </Link>
 
