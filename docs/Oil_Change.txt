@@ -1,0 +1,64 @@
+Oil Expense
+
+
+GET
+/api/v1/oil-expense
+Get oil expense status for all vehicles
+
+Parameters
+Try it out
+No parameters
+
+Responses
+Code	Description	Links
+200	
+List of vehicles with oil expense status
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "vehicleNo": "KA-01-AB-1234",
+    "status": "Good",
+    "hoursLeft": 100,
+    "lastChangedOn": 1200,
+    "currentHours": 1400,
+    "oilChangeInterval": 300,
+    "vehicleId": 1
+  }
+]
+No links
+
+PATCH
+/api/v1/oil-expense/{vehicleId}
+Update oil change interval for a vehicle
+
+Parameters
+Try it out
+Name	Description
+vehicleId *
+number
+(path)
+vehicleId
+Request body
+
+application/json
+Example Value
+Schema
+{
+  "oilChangeInterval": 300
+}
+Responses
+Code	Description	Links
+200	
+Interval updated successfully
+
+No links
+404	
+Vehicle not found
+
+No links

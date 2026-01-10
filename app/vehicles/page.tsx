@@ -28,7 +28,7 @@ interface Vehicle {
   category: string
   oilChangeIntervalHours: number
   description: string
-  oilLastChanged?: string
+  oilLastChangedHour?: number
   totalHoursRan?: number
   createdAt?: string
 }
@@ -110,8 +110,7 @@ export default function VehiclesPage() {
         category: formData.category,
         oilChangeIntervalHours: Number(formData.oilChangeIntervalHours),
         description: formData.description,
-        // Default values for required fields not in form yet
-        oilLastChanged: new Date().toISOString(), 
+        oilLastChangedHour: 0,
         totalHoursRan: 0,
       }
 

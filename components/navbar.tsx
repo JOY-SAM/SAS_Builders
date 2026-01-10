@@ -30,7 +30,6 @@ export function Navbar() {
   const totalNotifications = urgentVehicles.length + overdueVehicles.length
 
   const links = [
-    { href: "/calculator", label: "Calculator" },
     { href: "/expenses", label: "Expenses" },
     { href: "/oil-change", label: "Oil Change" },
     { href: "/vehicles", label: "Vehicles" },
