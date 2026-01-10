@@ -18,7 +18,7 @@ import { Plus } from "lucide-react"
 import api from "@/lib/axios"
 
 export interface Driver {
-  id: string
+  id: number
   name: string
   phoneNumber: string
 }

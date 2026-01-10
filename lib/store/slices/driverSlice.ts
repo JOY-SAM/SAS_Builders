@@ -1,13 +1,13 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
 
 export interface Driver {
-  id: string
-  username: string
+  id: number
+  name: string
   phoneNumber: string
 }
 
 export interface DriverFilters {
-  username: string
+  name: string
   phoneNumber: string
 }
 
@@ -17,30 +17,9 @@ interface DriverState {
 }
 
 const initialState: DriverState = {
-  drivers: [
-    {
-      id: "1",
-      username: "Rajesh Kumar",
-      phoneNumber: "+91 98765 43210",
-    },
-    {
-      id: "2",
-      username: "Amit Sharma",
-      phoneNumber: "+91 98765 43211",
-    },
-    {
-      id: "3",
-      username: "Suresh Patil",
-      phoneNumber: "+91 98765 43212",
-    },
-    {
-      id: "4",
-      username: "Prakash Singh",
-      phoneNumber: "+91 98765 43213",
-    },
-  ],
+  drivers: [],
   filters: {
-    username: "",
+    name: "",
     phoneNumber: "",
   },
 }
@@ -49,6 +28,9 @@ const driverSlice = createSlice({
   name: "drivers",
   initialState,
   reducers: {
+    setDrivers: (state, action: PayloadAction<Driver[]>) => {
+      state.drivers = action.payload
+    },
     addDriver: (state, action: PayloadAction<Driver>) => {
       state.drivers.push(action.payload)
     },
@@ -58,7 +40,7 @@ const driverSlice = createSlice({
         state.drivers[index] = action.payload
       }
     },
-    deleteDriver: (state, action: PayloadAction<string>) => {
+    deleteDriver: (state, action: PayloadAction<number>) => {
       state.drivers = state.drivers.filter((driver) => driver.id !== action.payload)
     },
     setFilter: (state, action: PayloadAction<{ key: keyof DriverFilters; value: string }>) => {
@@ -70,6 +52,6 @@ const driverSlice = createSlice({
   },
 })
 
-export const { addDriver, updateDriver, deleteDriver, setFilter, clearFilters } = driverSlice.actions
+export const { setDrivers, addDriver, updateDriver, deleteDriver, setFilter, clearFilters } = driverSlice.actions
 
 export default driverSlice.reducer
