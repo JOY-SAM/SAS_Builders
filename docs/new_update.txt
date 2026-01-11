@@ -1,0 +1,66 @@
+GET
+/api/v1/oil-expense/oil_change/notification
+Get vehicles with less than 100 hours left for oil change
+
+Response: OilExpenseStatusEntity[]
+
+Parameters
+Cancel
+No parameters
+
+Execute
+Clear
+Responses
+Curl
+
+curl -X 'GET' \
+  'http://localhost:3000/api/v1/oil-expense/oil_change/notification' \
+  -H 'accept: application/json'
+Request URL
+http://localhost:3000/api/v1/oil-expense/oil_change/notification
+Server response
+Code	Details
+200	
+Response body
+Download
+[
+  {
+    "vehicleNo": "TN 74",
+    "status": "Maintenance Due",
+    "hoursLeft": -300,
+    "lastChangedOn": 0,
+    "currentHours": 800,
+    "oilChangeInterval": 500,
+    "vehicleId": 2
+  }
+]
+Response headers
+ access-control-allow-credentials: true 
+ connection: keep-alive 
+ content-length: 142 
+ content-type: application/json; charset=utf-8 
+ date: Sat,10 Jan 2026 19:15:18 GMT 
+ keep-alive: timeout=72 
+ vary: Origin 
+Responses
+Code	Description	Links
+200	
+List of vehicles needing oil change soon (OilExpenseStatusEntity[])
+
+Media type
+
+application/json
+Controls Accept header.
+Example Value
+Schema
+[
+  {
+    "vehicleNo": "KA-01-AB-1234",
+    "status": "Good",
+    "hoursLeft": 100,
+    "lastChangedOn": 1200,
+    "currentHours": 1400,
+    "oilChangeInterval": 300,
+    "vehicleId": 1
+  }
+]
