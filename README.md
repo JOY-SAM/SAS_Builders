@@ -47,35 +47,41 @@ Track every vehicle and machine, log driver expenses, and stay ahead of oil chan
 
 > The screenshots use fictional demo data.
 
-<table>
-  <tr>
-    <td width="50%">
-      <img src="docs/screenshots/oil-change-alerts.png" alt="Oil change dashboard with the alerts popover open" />
-      <p align="center"><b>Oil change alerts</b>: overdue and due-soon vehicles at a glance</p>
-    </td>
-    <td width="50%">
-      <img src="docs/screenshots/create-expense.png" alt="Create new expense dialog" />
-      <p align="center"><b>Create expense</b>: searchable vehicle and driver pickers</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="docs/screenshots/vehicles.png" alt="Vehicle management table" />
-      <p align="center"><b>Vehicles</b>: fleet and equipment register</p>
-    </td>
-    <td width="50%">
-      <img src="docs/screenshots/drivers.png" alt="Drivers dashboard" />
-      <p align="center"><b>Drivers</b>: contacts with search filters</p>
-    </td>
-  </tr>
-</table>
+### Oil change alerts
 
-<details>
-<summary><b>Oil change dashboard (full page)</b></summary>
+Overdue and due-soon vehicles at a glance.
+
+![Oil change dashboard with the alerts popover open](docs/screenshots/oil-change-alerts.png)
+
+<br />
+
+### Create expense
+
+Searchable vehicle and driver pickers.
+
+![Create new expense dialog](docs/screenshots/create-expense.png)
+
+<br />
+
+### Vehicles
+
+Fleet and equipment register.
+
+![Vehicle management table](docs/screenshots/vehicles.png)
+
+<br />
+
+### Drivers
+
+Driver contacts with search filters.
+
+![Drivers dashboard](docs/screenshots/drivers.png)
+
+<br />
+
+### Oil change dashboard
 
 ![Oil change dashboard](docs/screenshots/oil-change.png)
-
-</details>
 
 ## Tech stack
 
